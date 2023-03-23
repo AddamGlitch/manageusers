@@ -29,3 +29,8 @@ foreach ($user in $usersXml.root.user) {
         Add-ADGroupMember -Identity $group -Members $user.account
     }
 }
+
+
+
+
+HOGJAHGMQAIGHAJIRHNAGOIJORHGA0
