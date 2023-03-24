@@ -1,5 +1,7 @@
 # Load the XML file
-$usersXml = [xml](Get-Content -Path "\assignments\users.xml")
+$fileinput = Get-ChildItem -Path (read-host "Please enter file path")
+
+$usersXml = [xml] (Get-Content -Path $fileinput)
 
 # Loop through each unique OU in the XML and create the corresponding AD object
 $ous = $usersXml.root.user | Select-Object -ExpandProperty ou -Unique
