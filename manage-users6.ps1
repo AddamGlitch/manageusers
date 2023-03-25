@@ -1,3 +1,4 @@
+
 # Load the XML file
 $fileinput = Get-ChildItem -Path (read-host "Please enter file path")
 
@@ -48,11 +49,12 @@ foreach ($user in $usersXml.root.user) {
     }
 
     # Check if the user's manager exists
-    if (![string]::IsNullOrWhiteSpace($user.manager) -and !(Get-ADUser -Filter "Name -eq '$($user.manager)'" -ErrorAction SilentlyContinue)) {
-        Write-Warning "Manager '$($user.manager)' for user '$($user.account)' does not exist. Setting Manager property to null."
-        $userProps.Manager = $null
-    } else {
-        $userProps.Manager = "CN=$($user.manager),$ouPath"
+    $manager = Get-ADUser -Filter "Name -eq '$($user.manager)'" -ErrorAction SilentlyContinue
+    if ($user.manager -and !$manager) {
+        Write-Warning "Manager '$($user.manager)' for user '$($user.account)' does not exist. Skipping setting Manager property."
+        continue
+    } elseif ($manager) {
+        $userProps.Manager = $manager
     }
 
     try {
