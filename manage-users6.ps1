@@ -48,16 +48,13 @@ foreach ($user in $usersXml.root.user) {
         continue
     }
 
-    # Check if the user's manager exists
-    $manager = Get-ADUser -Filter "Name -eq '$($user.manager)'" -ErrorAction SilentlyContinue
-    if ($user.manager -and !$manager) {
-        Write-Warning "Manager '$($user.manager)' for user '$($user.account)' does not exist. Skipping setting Manager property."
-        continue
-    } elseif ($manager) {
-        $userProps.Manager = $manager
-    }
-
     try {
+        # Check if the user's manager exists
+        if (![string]::IsNullOrWhiteSpace($user.manager)) {
+            $manager = Get-ADUser -Filter "Name -eq '$($user.manager)'" -ErrorAction Stop
+            $userProps.Manager = "CN=$($manager.Name),$ouPath"
+        }
+        
         New-ADUser @userProps -ErrorAction Stop
     } catch {
         Write-Error "Error creating user '$($user.account)': $($_.Exception.Message)"
