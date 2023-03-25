@@ -1,6 +1,5 @@
-
 # Load the XML file
-$fileinput = Get-ChildItem -Path (read-host "Please enter file path")
+$fileinput = Get-ChildItem -Path (Read-Host "Please enter file path")
 
 $usersXml = [xml] (Get-Content -Path $fileinput)
 
@@ -9,7 +8,7 @@ $ous = $usersXml.root.user | Select-Object -ExpandProperty ou -Unique
 foreach ($ou in $ous) {
     # Check if the OU already exists
     if (Get-ADOrganizationalUnit -Filter "Name -eq '$ou'" -ErrorAction SilentlyContinue) {
-        Write-Warning "OU '$ou' already exists. Skipping creation."
+        Write-Host "OU '$ou' already exists. Skipping creation." -ForegroundColor Yellow
         continue
     }
 
@@ -20,6 +19,7 @@ foreach ($ou in $ous) {
 
     try {
         New-ADOrganizationalUnit @ouProperties -ErrorAction Stop
+        Write-Host "Created OU '$ou'." -ForegroundColor Green
     } catch {
         Write-Error "Error creating OU '$ou': $($_.Exception.Message)"
         continue
@@ -44,7 +44,7 @@ foreach ($user in $usersXml.root.user) {
 
     # Check if the user already exists
     if (Get-ADUser -Filter "Name -eq '$($user.account)'" -ErrorAction SilentlyContinue) {
-        Write-Warning "User '$($user.account)' already exists. Skipping creation."
+        Write-Host "User '$($user.account)' already exists. Skipping creation." -ForegroundColor Yellow
         continue
     }
 
@@ -54,8 +54,9 @@ foreach ($user in $usersXml.root.user) {
             $manager = Get-ADUser -Filter "Name -eq '$($user.manager)'" -ErrorAction Stop
             $userProps.Manager = "CN=$($manager.Name),$ouPath"
         }
-        
+
         New-ADUser @userProps -ErrorAction Stop
+        Write-Host "Created user '$($user.account)'." -ForegroundColor Green
     } catch {
         Write-Error "Error creating user '$($user.account)': $($_.Exception.Message)"
         continue
@@ -65,6 +66,7 @@ foreach ($user in $usersXml.root.user) {
     foreach ($group in $user.memberOf.group) {
         try {
             Add-ADGroupMember -Identity $group -Members $user.account -ErrorAction Stop
+            Write-Host "Added user '$($user.account)' to group '$group'." -ForegroundColor Green
         } catch {
             Write-Error "Error adding user '$($user.account)' to group '$group': $($_.Exception.Message)"
         }
